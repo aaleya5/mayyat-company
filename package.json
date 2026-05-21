@@ -1,0 +1,11 @@
+{
+  "name": "mayyat",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @mayyat/frontend run dev",
+    "build": "npm --workspace @mayyat/frontend run build && npm --workspace @mayyat/backend run build"
+  }
+}
