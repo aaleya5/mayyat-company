@@ -1,7 +1,0 @@
-{
-  "name": "@mayyat/shared",
-  "version": "1.0.0",
-  "private": true,
-  "main": "index.d.ts",
-  "types": "index.d.ts"
-}

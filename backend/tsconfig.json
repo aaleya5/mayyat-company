@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES2020",
 		"module": "ESNext",
-		"moduleResolution": "Node",
+		"moduleResolution": "nodenext",
 		"lib": ["ES2020"],
 		"rootDir": "src",
 		"outDir": "dist",
@@ -15,6 +15,6 @@
 		"noImplicitAny": false,
 		"types": ["node"]
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "scripts/**/*"],
 	"exclude": ["node_modules", "dist"]
 }
