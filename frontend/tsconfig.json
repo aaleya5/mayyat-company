@@ -1,19 +1,22 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "lib": ["DOM", "ES2021"],
-    "jsx": "react-jsx",
-    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "noEmit": true,
     "isolatedModules": true,
-    "types": ["vite/client"]
+    "noEmit": true,
+    "paths": {
+      "@mayyat/shared": ["../shared/src/index.ts"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

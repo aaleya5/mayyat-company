@@ -1,0 +1,205 @@
+// =============================================================================
+// Mayyat Records — Prisma Schema
+// PostgreSQL 16 · Prisma 5.x
+//
+// Tables:
+//   users       — app login accounts (admin / viewer roles)
+//   records     — one row per deceased person (the core data)
+//   audit_log   — who changed what and when (immutable append-only)
+//
+// Optional / future columns are marked with TODO comments so you know
+// exactly where to add them when the need arises.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN  // full CRUD + user management
+  VIEWER // read + search only
+}
+
+// Gender is stored separately from name to avoid hard-coding suffix rules
+// in the DB. Auto-detected during import, correctable in the UI.
+// UNKNOWN is used when detection is ambiguous (no recognised suffix).
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE // soft-delete; row is never physically removed
+  RESTORE // un-delete
+}
+
+// ---------------------------------------------------------------------------
+// users — app accounts
+// Kept minimal intentionally. Add profile fields (phone, address) later if
+// you ever need multi-branch support or notifications.
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role     @default(VIEWER)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // relations
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// records — one row per deceased person
+//
+// Field notes from your Excel:
+//   - srNo          : the original hand-assigned number (2787–2851 in your
+//                     data). We keep it separate from the DB primary key so
+//                     legacy references still work. Nullable for new rows
+//                     that haven't been assigned a community number yet.
+//   - name          : full name as written (mixed transliterations, so we
+//                     store exactly as-is and rely on Postgres full-text
+//                     search with tsvector for fuzzy matching)
+//   - ageText       : raw text from source ("84", "approx.60", "1 day",
+//                     "1 hour"). Never cast to integer — you will lose data.
+//   - ageYears      : computed approximate numeric age in years for
+//                     range-filter queries. NULL when ageText is non-numeric.
+//   - burialDate    : date of burial (your "Date" column)
+//   - burialDay     : day-of-week stored as text to match source ("Friday")
+//                     You could derive this from burialDate, but keeping it
+//                     lets you verify data integrity against the original.
+//   - misriDate     : Islamic calendar date as free text
+//                     ("4 jamadil aakhar 1443"). Not parsed into components
+//                     because Hijri arithmetic needs a library; raw text is
+//                     searchable enough for now.
+//   - deathTime     : time of death as text ("4.00 pm"). Stored as text
+//                     because the source format is inconsistent and precision
+//                     matters less than preservability.
+//   - deathDate     : date of death. NULL when death and burial are on the
+//                     same day (matches your Excel behaviour).
+//   - burialTime    : time of burial ("dafnavano time" in the original)
+//   - relativeName  : relationship string ("xyz's mother / father / wife…")
+//
+// TODO: cause_of_death TEXT — add when/if families start providing this.
+//       Keep nullable so old records don't need backfilling.
+//       Example: "cardiac arrest", "old age", "accident" — free text is fine,
+//       no need to enumerate values at this stage.
+//
+// TODO: notes TEXT — a general scratchpad column for anything that doesn't
+//       fit the structured fields (e.g. "name corrected on 2025-03-01").
+//
+// TODO: graveNumber TEXT — if the cemetery assigns plot numbers and your
+//       father wants to track them alongside death records.
+//
+// TODO: masjid TEXT — which mosque handled the janazah prayer, if relevant.
+// ---------------------------------------------------------------------------
+
+model Record {
+  id           String    @id @default(cuid())
+
+  // Original serial number from the community register. Nullable because
+  // not all early rows have one, and new online entries won't auto-get one.
+  srNo         Int?      @unique @map("sr_no")
+
+  name         String
+  ageText      String?   @map("age_text")     // raw: "84", "approx.60", "1 day"
+  ageYears     Float?    @map("age_years")     // computed approx, for range filters
+
+  burialDate   DateTime  @map("burial_date")  // always present
+  burialDay    String?   @map("burial_day")   // "Friday", "Saturday" …
+  burialTime   String?   @map("burial_time")  // "9.00 pm"
+
+  misriDate    String?   @map("misri_date")   // "4 jamadil aakhar 1443"
+
+  deathTime    String?   @map("death_time")   // "4.00 pm"
+  deathDate    DateTime? @map("death_date")   // NULL = same day as burial
+
+  relativeName String?   @map("relative_name") // "shamsuddin's mother"
+
+  // Gender — auto-detected from name suffix during import, manually correctable.
+  // MALE:    names ending in bhai, husain, ali, uddin, etc.
+  // FEMALE:  names ending in ben, bu, banu, begum, etc.
+  // UNKNOWN: ambiguous or no recognised suffix
+  gender       Gender    @default(UNKNOWN)
+
+  // -------------------------------------------------------------------------
+  // Optional / future fields — add when ready
+  // -------------------------------------------------------------------------
+  // causeOfDeath String? @map("cause_of_death")
+  // notes        String?
+  // graveNumber  String? @map("grave_number")
+  // masjid       String?
+
+  // Full-text search vector — auto-maintained by a Postgres trigger
+  // (see migration SQL). Combines name + relativeName + misriDate.
+  // Prisma doesn't manage triggers, but we can store the tsvector column
+  // and keep it updated via raw SQL in the migration.
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  // Soft delete — we never physically remove a record
+  isDeleted    Boolean   @default(false) @map("is_deleted")
+  deletedAt    DateTime? @map("deleted_at")
+
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt      @map("updated_at")
+
+  // relations
+  auditLogs AuditLog[]
+
+  // Indexes — chosen carefully for the query patterns this app needs:
+  //   1. burialDate  — most filters and "sort by date" queries hit this
+  //   2. name (gin trigram) — partial name search without full-text overhead
+  //   3. searchVector (GIN) — full-text search across name + relative + misri
+  //   4. srNo        — covered by @unique above
+  //   5. isDeleted   — every list query filters this out
+  @@index([burialDate])
+  @@index([isDeleted])
+  // GIN indexes on searchVector and name trigrams are added in raw SQL migration
+  // (Prisma doesn't support GIN directly in schema.prisma)
+
+  @@map("records")
+}
+
+// ---------------------------------------------------------------------------
+// audit_log — immutable append-only trail
+// Every CREATE / UPDATE / DELETE / RESTORE gets a row here.
+// Never update or delete rows in this table — it's an audit trail.
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  action     AuditAction
+  recordId   String?     @map("record_id")  // NULL for user-management actions
+  userId     String      @map("user_id")
+  changedAt  DateTime    @default(now()) @map("changed_at")
+
+  // JSON snapshot: { before: {...}, after: {...} }
+  // "before" is NULL on CREATE, "after" is NULL on DELETE
+  diff       Json?
+
+  record     Record?     @relation(fields: [recordId], references: [id])
+  user       User        @relation(fields: [userId], references: [id])
+
+  @@index([recordId])
+  @@index([changedAt])
+
+  @@map("audit_log")
+}

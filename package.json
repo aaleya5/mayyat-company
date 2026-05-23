@@ -1,7 +1,11 @@
 {
   "name": "mayyat",
   "private": true,
-  "workspaces": ["shared", "backend", "frontend"],
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm run dev -w @mayyat/backend\" \"npm run dev -w @mayyat/frontend\"",
     "build": "npm run build -w @mayyat/shared && npm run build -w @mayyat/backend && npm run build -w @mayyat/frontend",
@@ -10,6 +14,10 @@
     "db:seed": "npm run db:seed -w @mayyat/backend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "prisma": "^7.8.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0"
   }
 }

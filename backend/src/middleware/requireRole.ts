@@ -1,5 +1,3 @@
-//ADMIN vs VIEWER gate
-
 /**
  * src/middleware/requireRole.ts
  *

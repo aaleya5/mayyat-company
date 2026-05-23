@@ -1,5 +1,3 @@
-//CRUD for /api/records
-
 /**
  * src/routes/records.ts
  *

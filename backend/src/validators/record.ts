@@ -1,5 +1,3 @@
-//Zod schemas for request bodies
-
 /**
  * src/validators/record.ts
  *

@@ -1,5 +1,3 @@
-//Prisma singleton + query helpers
-
 /**
  * src/lib/db.ts
  *
@@ -389,5 +387,18 @@ export async function restoreRecord(id: string, userId: string) {
       },
     });
     return record;
+  });
+}
+
+/**
+ * Get audit log entries for a record
+ */
+export async function getAuditLog(recordId: string) {
+  return prisma.auditLog.findMany({
+    where: { recordId },
+    include: {
+      user: { select: { id: true, email: true, name: true } },
+    },
+    orderBy: { changedAt: "desc" },
   });
 }
