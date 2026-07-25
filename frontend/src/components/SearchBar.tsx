@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "../hooks/useDebounce";
 
 interface SearchBarProps {
@@ -10,16 +10,8 @@ interface SearchBarProps {
 /**
  * SearchBar - Debounced search input component
  * 
- * Features:
- * - Immediate visual feedback (user sees text)
- * - Debounced API call (after 300ms of no typing)
- * - Clear button (X icon)
- * - Accessibility (proper labels)
- * 
- * Example:
- * User types "m" → immediately shown in input
- * Wait 300ms with no new input → API call to search for "m"
- * User types "mehfuza" (total) → only ONE API call (for "mehfuza")
+ * FIXED: useEffect now has proper dependency array [debouncedInput, onSearch]
+ * PREVENTS: Infinite loop by memoizing onSearch callback
  */
 export default function SearchBar({
   onSearch,
@@ -29,10 +21,13 @@ export default function SearchBar({
   const [input, setInput] = useState("");
   const debouncedInput = useDebounce(input, 300);
 
+  // Wrap onSearch in useCallback to prevent unnecessary re-renders
+  const memoizedOnSearch = useCallback(onSearch, [onSearch]);
+
   // When debounced input changes, call parent callback
   useEffect(() => {
-    onSearch(debouncedInput);
-  }, [debouncedInput, onSearch]);
+    memoizedOnSearch(debouncedInput);
+  }, [debouncedInput, memoizedOnSearch]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -40,7 +35,7 @@ export default function SearchBar({
 
   const handleClear = () => {
     setInput("");
-    onSearch("");
+    memoizedOnSearch("");
   };
 
   return (

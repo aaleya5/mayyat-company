@@ -54,9 +54,6 @@ authRouter.post("/login", async (req: Request, res: Response) => {
       { expiresIn: "7d" }
     );
 
-    console.log("[LOGIN] ✓ Token created for user:", user.email);
-    console.log("[LOGIN] JWT_SECRET used:", JWT_SECRET?.substring(0, 10) + "...");
-
     const response: LoginResponse = {
       token,
       user: {

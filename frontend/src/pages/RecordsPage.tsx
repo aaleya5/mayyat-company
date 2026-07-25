@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import SearchBar from "../components/SearchBar";
 import FilterPanel from "../components/FilterPanel";
 import RecordTable from "../components/RecordTable";
@@ -14,13 +14,8 @@ interface RecordsPageProps {
 /**
  * RecordsPage - Main dashboard showing all records with search, filter, and CRUD
  * 
- * Features:
- * - Search bar (debounced)
- * - Filter panel (year, month, gender, age)
- * - Sortable table
- * - Create/Edit/Delete modals
- * - Pagination
- * - Real-time updates (via Socket.io, coming later)
+ * FIXED: useCallback prevents handlers from being recreated on every render
+ * PREVENTS: Infinite loop in child components (SearchBar, FilterPanel, etc.)
  */
 export default function RecordsPage({
   token,
@@ -42,30 +37,29 @@ export default function RecordsPage({
   const isAdmin = user?.role === "ADMIN";
   const totalPages = Math.ceil(total / limit);
 
-  // Initial fetch on mount
+  // Fetch whenever token, page, sort, or filters change.
+  // fetchRecords (from useRecords) is a useCallback keyed on [token, page, filters, limit],
+  // so this effect re-runs any time one of those actually changes.
   useEffect(() => {
     fetchRecords();
-  }, []);
+  }, [fetchRecords]);
 
-  // Re-fetch when page changes
-  useEffect(() => {
-    fetchRecords();
-  }, [page, sortBy, sortDir]);
-
-  const handleSearch = (query: string) => {
+  // FIXED: useCallback prevents this from being recreated on every render
+  const handleSearch = useCallback((query: string) => {
     setPage(1);
-    setFilters({ q: query });
-  };
+    setFilters((prev) => ({ ...prev, q: query }));
+  }, [setPage, setFilters]);
 
-  const handleFilterChange = (newFilters: Partial<RecordFilters>) => {
+  // FIXED: useCallback prevents this from being recreated on every render
+  const handleFilterChange = useCallback((newFilters: Partial<RecordFilters>) => {
     setPage(1);
-    setFilters(newFilters);
-  };
+    setFilters((prev) => ({ ...prev, ...newFilters }));
+  }, [setPage, setFilters]);
 
   const handleSort = (column: string, direction: "asc" | "desc") => {
     setSortBy(column);
     setSortDir(direction);
-    setFilters({ sortBy: column, sortDir: direction });
+    setFilters((prev) => ({ ...prev, sortBy: column, sortDir: direction }));
   };
 
   const handleCreateClick = () => {
@@ -204,10 +198,10 @@ export default function RecordsPage({
         )}
 
         {/* Search Bar */}
-        <SearchBar onSearch={handleSearch} disabled={loading} />
+        <SearchBar onSearch={handleSearch} />
 
         {/* Filter Panel */}
-        <FilterPanel onFilterChange={handleFilterChange} disabled={loading} />
+        <FilterPanel onFilterChange={handleFilterChange} />
 
         {/* Error Message */}
         {error && (

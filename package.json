@@ -14,10 +14,6 @@
     "db:seed": "npm run db:seed -w @mayyat/backend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "prisma": "^7.8.0"
-  },
-  "dependencies": {
-    "@prisma/client": "^7.8.0"
+    "concurrently": "^8.2.2"
   }
 }

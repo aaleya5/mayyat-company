@@ -1,25 +1,32 @@
 import { Router, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+import { prisma } from "../lib/db";
 
-const router = Router();
-const prisma = new PrismaClient();
+export const recordsRouter = Router();
+
+// Treat empty strings and null from the form/DB round-trip as "not provided"
+// rather than a literal value. null shows up for older records that never had
+// a value (e.g. srNo), "" shows up from untouched optional fields on the form.
+const emptyToUndefined = (val: unknown) => (val === "" || val === null ? undefined : val);
 
 // Validation schema
 const createRecordSchema = z.object({
-  srNo: z.number().optional(),
+  srNo: z.preprocess(emptyToUndefined, z.number().optional()),
   name: z.string().min(1).max(255),
-  ageText: z.string().max(100).optional(),
+  ageText: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
   gender: z.enum(["MALE", "FEMALE", "UNKNOWN"]).optional().default("UNKNOWN"),
   burialDate: z.string().refine((date) => !isNaN(Date.parse(date)), "Invalid date"),
-  burialDay: z.string().optional(),
-  burialTime: z.string().optional(),
-  deathTime: z.string().optional(),
-  deathDate: z.string().optional(),
-  misriDate: z.string().optional(),
-  relativeName: z.string().optional(),
+  burialDay: z.preprocess(emptyToUndefined, z.string().optional()),
+  burialTime: z.preprocess(emptyToUndefined, z.string().optional()),
+  deathTime: z.preprocess(emptyToUndefined, z.string().optional()),
+  deathDate: z.preprocess(
+    emptyToUndefined,
+    z.string().refine((date) => !isNaN(Date.parse(date)), "Invalid date").optional()
+  ),
+  misriDate: z.preprocess(emptyToUndefined, z.string().optional()),
+  relativeName: z.preprocess(emptyToUndefined, z.string().optional()),
 });
 
 type CreateRecordInput = z.infer<typeof createRecordSchema>;
@@ -41,7 +48,7 @@ type CreateRecordInput = z.infer<typeof createRecordSchema>;
  * - sortDir: asc|desc
  * - includeDeleted: show deleted records (admin only)
  */
-router.get("/records", authenticate, async (req: Request, res: Response) => {
+recordsRouter.get("/", authenticate, async (req: Request, res: Response) => {
   try {
     const {
       q,
@@ -137,7 +144,7 @@ router.get("/records", authenticate, async (req: Request, res: Response) => {
  * GET /api/records/:id
  * Get single record by ID
  */
-router.get("/records/:id", authenticate, async (req: Request, res: Response) => {
+recordsRouter.get("/:id", authenticate, async (req: Request, res: Response) => {
   try {
     const record = await prisma.record.findUnique({
       where: { id: req.params.id },
@@ -158,8 +165,8 @@ router.get("/records/:id", authenticate, async (req: Request, res: Response) => 
  * POST /api/records
  * Create new record (ADMIN only)
  */
-router.post(
-  "/records",
+recordsRouter.post(
+  "/",
   authenticate,
   requireRole("ADMIN"),
   async (req: Request, res: Response) => {
@@ -169,6 +176,8 @@ router.post(
       const record = await prisma.record.create({
         data: {
           ...data,
+          burialDate: new Date(data.burialDate),
+          deathDate: data.deathDate ? new Date(data.deathDate) : undefined,
           ageYears: data.ageText
             ? parseFloat(data.ageText.match(/\d+/)?.[0] || "0")
             : undefined,
@@ -202,8 +211,8 @@ router.post(
  * PATCH /api/records/:id
  * Update record (ADMIN only)
  */
-router.patch(
-  "/records/:id",
+recordsRouter.patch(
+  "/:id",
   authenticate,
   requireRole("ADMIN"),
   async (req: Request, res: Response) => {
@@ -223,6 +232,8 @@ router.patch(
         where: { id: req.params.id },
         data: {
           ...data,
+          burialDate: data.burialDate ? new Date(data.burialDate) : undefined,
+          deathDate: data.deathDate ? new Date(data.deathDate) : undefined,
           ageYears: data.ageText
             ? parseFloat(data.ageText.match(/\d+/)?.[0] || "0")
             : before.ageYears,
@@ -259,8 +270,8 @@ router.patch(
  * Sets isDeleted = true and deletedAt = now()
  * Record is hidden from normal queries but can be restored
  */
-router.delete(
-  "/records/:id",
+recordsRouter.delete(
+  "/:id",
   authenticate,
   requireRole("ADMIN"),
   async (req: Request, res: Response) => {
@@ -305,8 +316,8 @@ router.delete(
  * 
  * Sets isDeleted = false and deletedAt = null
  */
-router.post(
-  "/records/:id/restore",
+recordsRouter.post(
+  "/:id/restore",
   authenticate,
   requireRole("ADMIN"),
   async (req: Request, res: Response) => {
@@ -353,8 +364,8 @@ router.post(
  * GET /api/records/:id/audit
  * Get audit log for a record (ADMIN only)
  */
-router.get(
-  "/records/:id/audit",
+recordsRouter.get(
+  "/:id/audit",
   authenticate,
   requireRole("ADMIN"),
   async (req: Request, res: Response) => {
@@ -375,4 +386,4 @@ router.get(
   }
 );
 
-export default router;
+export default recordsRouter;

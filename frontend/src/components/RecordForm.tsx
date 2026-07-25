@@ -40,16 +40,22 @@ export default function RecordForm({
 }: RecordFormProps) {
   const isEditMode = !!record;
 
+  // <input type="date"> requires exactly "YYYY-MM-DD". The API returns full
+  // ISO datetimes (e.g. "2026-07-17T00:00:00.000Z"), which the input treats
+  // as invalid and renders blank - so trim to the date portion here.
+  const toDateInputValue = (value?: string | null) =>
+    value ? value.slice(0, 10) : "";
+
   const [formData, setFormData] = useState<CreateRecordInput>({
     srNo: record?.srNo,
     name: record?.name || "",
     ageText: record?.ageText || "",
     gender: record?.gender || "UNKNOWN",
-    burialDate: record?.burialDate || "",
+    burialDate: toDateInputValue(record?.burialDate),
     burialDay: record?.burialDay || "",
     burialTime: record?.burialTime || "",
     deathTime: record?.deathTime || "",
-    deathDate: record?.deathDate || "",
+    deathDate: toDateInputValue(record?.deathDate),
     misriDate: record?.misriDate || "",
     relativeName: record?.relativeName || "",
   });
@@ -61,10 +67,10 @@ export default function RecordForm({
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value || undefined,
+      [name]: value === "" ? undefined : type === "number" ? Number(value) : value,
     }));
   };
 

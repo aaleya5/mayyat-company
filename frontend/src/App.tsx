@@ -5,20 +5,25 @@ import RecordsPage from "./pages/RecordsPage";
 
 function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check if token exists and is valid
-    const token = localStorage.getItem("token");
-    if (token) {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
       // Try to fetch /api/auth/me to validate token
       fetch("http://localhost:4000/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${storedToken}` },
       })
         .then((r) => r.json())
         .then((data) => {
-          if (data.user) setUser(data.user);
-          else localStorage.removeItem("token");
+          if (data.user) {
+            setUser(data.user);
+            setToken(storedToken);
+          } else {
+            localStorage.removeItem("token");
+          }
         })
         .catch(() => localStorage.removeItem("token"))
         .finally(() => setLoading(false));
@@ -27,13 +32,25 @@ function App() {
     }
   }, []);
 
+  const handleLogin = (loggedInUser: AuthUser) => {
+    // LoginPage already wrote the token to localStorage before calling this
+    setToken(localStorage.getItem("token"));
+    setUser(loggedInUser);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  };
+
   if (loading) return <div>Loading...</div>;
 
   if (!user) {
-    return <LoginPage onLogin={setUser} />;
+    return <LoginPage onLogin={handleLogin} />;
   }
 
-  return <RecordsPage user={user} onLogout={() => setUser(null)} />;
+  return <RecordsPage token={token} user={user} onLogout={handleLogout} />;
 }
 
 export default App;

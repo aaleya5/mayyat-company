@@ -19,6 +19,11 @@ import { initSocket } from "./lib/socket.js";
 
 const PORT = Number(process.env.PORT) || 4000;
 
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  credentials: true,
+};
+
 // ---------------------------------------------------------------------------
 // Express app
 // ---------------------------------------------------------------------------
@@ -35,7 +40,8 @@ app.use(
     },
   })
 );
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 // Health check — used by Docker's healthcheck and load balancers
