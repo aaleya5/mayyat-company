@@ -1,0 +1,1 @@
+//typed fetch wrapper for all endpoints
