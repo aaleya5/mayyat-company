@@ -13,6 +13,7 @@
     "db:studio": "prisma studio --schema prisma/schema.prisma",
     "db:seed": "tsx scripts/import-excel.ts",
     "db:seed:user": "tsx scripts/seed-user.ts",
+    "db:create-user": "tsx scripts/create-user.ts",
     "db:custom-sql": "psql postgresql://mayyat_user:your_password@localhost:5432/mayyat -f prisma/migrations/custom/001_search_indexes.sql"
   },
   "dependencies": {

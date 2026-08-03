@@ -6,8 +6,8 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [email, setEmail] = useState("admin@mayyat.local");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,46 +39,68 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
+  const inputClass =
+    "w-full border border-border bg-surface px-3 py-2.5 text-sm text-ink-text placeholder:text-muted focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/15 disabled:cursor-not-allowed disabled:bg-paper disabled:text-muted";
+  const labelClass = "mb-1.5 block text-sm font-medium text-ink-text";
+
   return (
-    <div className="container" style={{ maxWidth: "400px", marginTop: "100px" }}>
-      <h1>Mayyat Records</h1>
-      <p style={{ marginBottom: "20px", color: "#666" }}>
-        Community death records management
-      </p>
-
-      <form onSubmit={handleSubmit} style={{ background: "white", padding: "20px", borderRadius: "8px" }}>
-        <div className="form-group">
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%" }}
-          />
+    <div className="flex min-h-screen items-center justify-center bg-paper px-4 font-sans">
+      <div className="w-full max-w-sm">
+        {/* Brand */}
+        <div className="mb-8 flex flex-col items-center text-center">
+          <h1 className="font-display text-3xl font-extrabold uppercase tracking-tight text-ink">
+            Mayyat
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            Community Death Records Registry
+          </p>
         </div>
 
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%" }}
-          />
-        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="border border-border bg-surface p-6 shadow-sm"
+        >
+          <div className="mb-4">
+            <label className={labelClass}>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@mayyat.local"
+              required
+              disabled={loading}
+              className={inputClass}
+            />
+          </div>
 
-        {error && <div style={{ color: "#dc3545", marginBottom: "16px" }}>{error}</div>}
+          <div className="mb-5">
+            <label className={labelClass}>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              disabled={loading}
+              className={inputClass}
+            />
+          </div>
 
-        <button type="submit" style={{ width: "100%" }} disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          {error && (
+            <div className="mb-4 border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+              ⚠️ {error}
+            </div>
+          )}
 
-      <p style={{ marginTop: "16px", fontSize: "12px", color: "#999" }}>
-        Demo credentials: admin@mayyat.local / admin123
-      </p>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-ink px-4 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-ink-light disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

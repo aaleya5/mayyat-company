@@ -80,58 +80,33 @@ export default function FilterPanel({
     (v) => v !== ""
   ).length;
 
+  const inputClass =
+    "w-full border border-border bg-surface px-3 py-2 text-sm text-ink-text placeholder:text-muted focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/15 disabled:cursor-not-allowed disabled:bg-paper disabled:text-muted";
+  const labelClass = "mb-1 block text-xs font-medium text-muted";
+
   return (
-    <div
-      style={{
-        marginBottom: "20px",
-        border: "1px solid #ddd",
-        borderRadius: "4px",
-        overflow: "hidden",
-      }}
-    >
+    <div className="mb-5 overflow-hidden border border-border">
       <button
         onClick={() => setExpanded(!expanded)}
         disabled={disabled}
-        style={{
-          width: "100%",
-          padding: "12px",
-          background: "#f9f9f9",
-          border: "none",
-          borderRadius: "0px",
-          cursor: "pointer",
-          fontWeight: "500",
-          textAlign: "left",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          fontSize: "14px",
-        }}
+        className="flex w-full items-center justify-between bg-paper px-4 py-3 text-left text-sm font-medium text-ink-text transition-colors hover:bg-border/40 disabled:cursor-not-allowed"
       >
-        <span>
-          {expanded ? "▼" : "▶"} Filters
+        <span className="flex items-center gap-1.5">
+          <span className="text-xs text-muted">{expanded ? "▼" : "▶"}</span>
+          Filters
           {activeFilterCount > 0 && (
-            <span style={{ marginLeft: "8px", color: "#007BFF" }}>
-              ({activeFilterCount} active)
+            <span className="ml-1 bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent-dark">
+              {activeFilterCount} active
             </span>
           )}
         </span>
       </button>
 
       {expanded && (
-        <div
-          style={{
-            padding: "16px",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-            borderTop: "1px solid #eee",
-          }}
-        >
+        <div className="grid grid-cols-2 gap-4 border-t border-border bg-surface p-4">
           {/* Year */}
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500 }}>
-              Year (Burial)
-            </label>
+            <label className={labelClass}>Year (Burial)</label>
             <input
               type="number"
               min="2000"
@@ -140,34 +115,18 @@ export default function FilterPanel({
               value={year}
               onChange={handleYearChange}
               disabled={disabled}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                boxSizing: "border-box",
-              }}
+              className={inputClass}
             />
           </div>
 
           {/* Month */}
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500 }}>
-              Month (Burial)
-            </label>
+            <label className={labelClass}>Month (Burial)</label>
             <select
               value={month}
               onChange={handleMonthChange}
               disabled={disabled}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                boxSizing: "border-box",
-              }}
+              className={inputClass}
             >
               <option value="">All months</option>
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
@@ -182,21 +141,12 @@ export default function FilterPanel({
 
           {/* Gender */}
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500 }}>
-              Gender
-            </label>
+            <label className={labelClass}>Gender</label>
             <select
               value={gender}
               onChange={handleGenderChange}
               disabled={disabled}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                boxSizing: "border-box",
-              }}
+              className={inputClass}
             >
               <option value="">All genders</option>
               <option value="MALE">Male</option>
@@ -210,9 +160,7 @@ export default function FilterPanel({
 
           {/* Age Min */}
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500 }}>
-              Age Min
-            </label>
+            <label className={labelClass}>Age Min</label>
             <input
               type="number"
               min="0"
@@ -221,22 +169,13 @@ export default function FilterPanel({
               value={ageMin}
               onChange={handleAgeMinChange}
               disabled={disabled}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                boxSizing: "border-box",
-              }}
+              className={inputClass}
             />
           </div>
 
           {/* Age Max */}
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: 500 }}>
-              Age Max
-            </label>
+            <label className={labelClass}>Age Max</label>
             <input
               type="number"
               min="0"
@@ -245,33 +184,16 @@ export default function FilterPanel({
               value={ageMax}
               onChange={handleAgeMaxChange}
               disabled={disabled}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                boxSizing: "border-box",
-              }}
+              className={inputClass}
             />
           </div>
 
           {/* Reset Button */}
-          <div style={{ gridColumn: "1 / -1" }}>
+          <div className="col-span-2">
             <button
               onClick={handleReset}
               disabled={disabled}
-              style={{
-                width: "100%",
-                padding: "10px",
-                background: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontWeight: "500",
-                fontSize: "14px",
-              }}
+              className="w-full bg-ink px-4 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-ink-light disabled:cursor-not-allowed disabled:opacity-60"
             >
               Reset Filters
             </button>

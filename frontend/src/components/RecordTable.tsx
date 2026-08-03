@@ -13,7 +13,7 @@ interface RecordTableProps {
 
 /**
  * RecordTable - Display records in sortable table
- * 
+ *
  * Features:
  * - Sortable columns (click header)
  * - Gender badges (color-coded)
@@ -34,41 +34,33 @@ export default function RecordTable({
     if (!onSort) return;
 
     // If same column, toggle direction; else change column
-    const newDir =
-      sortBy === column && sortDir === "desc" ? "asc" : "desc";
+    const newDir = sortBy === column && sortDir === "desc" ? "asc" : "desc";
     onSort(column, newDir);
   };
 
   const getSortIndicator = (column: string) => {
-    if (sortBy !== column) return " ";
-    return sortDir === "asc" ? " ▲" : " ▼";
+    if (sortBy !== column) return null;
+    return (
+      <span className="ml-1 text-accent">{sortDir === "asc" ? "▲" : "▼"}</span>
+    );
   };
 
+  const headerClass = (column: string) =>
+    `cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-border/40 ${
+      sortBy === column ? "text-ink" : "text-muted"
+    }`;
+
   const getGenderBadge = (gender: string) => {
-    const bgColor =
+    const classes =
       gender === "MALE"
-        ? "#d1ecf1"
+        ? "bg-ink/10 text-ink-light border-ink/20"
         : gender === "FEMALE"
-          ? "#f8d7da"
-          : "#e2e3e5";
-    const textColor =
-      gender === "MALE"
-        ? "#0c5460"
-        : gender === "FEMALE"
-          ? "#721c24"
-          : "#383d41";
+          ? "bg-accent/15 text-accent-dark border-accent/30"
+          : "bg-border/60 text-muted border-border";
 
     return (
       <span
-        style={{
-          display: "inline-block",
-          padding: "4px 8px",
-          borderRadius: "4px",
-          fontSize: "12px",
-          fontWeight: "500",
-          background: bgColor,
-          color: textColor,
-        }}
+        className={`inline-block border px-2.5 py-0.5 text-xs font-medium ${classes}`}
       >
         {gender}
       </span>
@@ -76,157 +68,65 @@ export default function RecordTable({
   };
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: "14px",
-        }}
-      >
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
         <thead>
-          <tr style={{ background: "#f9f9f9", borderBottom: "2px solid #ddd" }}>
-            <th
-              onClick={() => handleHeaderClick("name")}
-              style={{
-                padding: "12px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontWeight: "600",
-                userSelect: "none",
-              }}
-            >
+          <tr className="border-b border-border bg-paper">
+            <th onClick={() => handleHeaderClick("name")} className={headerClass("name")}>
               Name
               {getSortIndicator("name")}
             </th>
-            <th
-              onClick={() => handleHeaderClick("ageText")}
-              style={{
-                padding: "12px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontWeight: "600",
-                userSelect: "none",
-              }}
-            >
+            <th onClick={() => handleHeaderClick("ageText")} className={headerClass("ageText")}>
               Age
               {getSortIndicator("ageText")}
             </th>
-            <th
-              onClick={() => handleHeaderClick("gender")}
-              style={{
-                padding: "12px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontWeight: "600",
-                userSelect: "none",
-              }}
-            >
+            <th onClick={() => handleHeaderClick("gender")} className={headerClass("gender")}>
               Gender
               {getSortIndicator("gender")}
             </th>
-            <th
-              onClick={() => handleHeaderClick("burialDate")}
-              style={{
-                padding: "12px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontWeight: "600",
-                userSelect: "none",
-              }}
-            >
+            <th onClick={() => handleHeaderClick("burialDate")} className={headerClass("burialDate")}>
               Burial Date
               {getSortIndicator("burialDate")}
             </th>
-            <th
-              onClick={() => handleHeaderClick("misriDate")}
-              style={{
-                padding: "12px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontWeight: "600",
-                userSelect: "none",
-              }}
-            >
+            <th onClick={() => handleHeaderClick("misriDate")} className={headerClass("misriDate")}>
               Misri Date
               {getSortIndicator("misriDate")}
             </th>
-            <th
-              onClick={() => handleHeaderClick("relativeName")}
-              style={{
-                padding: "12px",
-                textAlign: "left",
-                cursor: "pointer",
-                fontWeight: "600",
-                userSelect: "none",
-              }}
-            >
+            <th onClick={() => handleHeaderClick("relativeName")} className={headerClass("relativeName")}>
               Relative
               {getSortIndicator("relativeName")}
             </th>
-            {canEdit && (
-              <th
-                style={{
-                  padding: "12px",
-                  textAlign: "left",
-                  fontWeight: "600",
-                }}
-              >
+            {(onView || canEdit) && (
+              <th className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 Actions
               </th>
             )}
           </tr>
         </thead>
         <tbody>
-          {records.map((record, idx) => (
+          {records.map((record) => (
             <tr
               key={record.id}
-              style={{
-                borderBottom: "1px solid #eee",
-                background: idx % 2 === 0 ? "white" : "#fafafa",
-                transition: "background 0.1s",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLTableRowElement).style.background =
-                  "#f0f0f0";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLTableRowElement).style.background =
-                  idx % 2 === 0 ? "white" : "#fafafa";
-              }}
+              className="border-b border-border transition-colors last:border-b-0 hover:bg-paper/70"
             >
-              <td style={{ padding: "12px" }}>
-                <strong>{record.name}</strong>
-              </td>
-              <td style={{ padding: "12px" }}>{record.ageText || "–"}</td>
-              <td style={{ padding: "12px" }}>
-                {getGenderBadge(record.gender)}
-              </td>
-              <td style={{ padding: "12px" }}>
+              <td className="px-4 py-3 font-medium text-ink-text">{record.name}</td>
+              <td className="px-4 py-3 text-ink-text">{record.ageText || "–"}</td>
+              <td className="px-4 py-3">{getGenderBadge(record.gender)}</td>
+              <td className="px-4 py-3 text-ink-text">
                 {record.burialDate
                   ? new Date(record.burialDate).toLocaleDateString()
                   : "–"}
               </td>
-              <td style={{ padding: "12px" }}>{record.misriDate || "–"}</td>
-              <td style={{ padding: "12px" }}>
-                {record.relativeName || "–"}
-              </td>
-              {canEdit && (
-                <td style={{ padding: "12px" }}>
-                  <div style={{ display: "flex", gap: "4px" }}>
+              <td className="px-4 py-3 text-ink-text">{record.misriDate || "–"}</td>
+              <td className="px-4 py-3 text-ink-text">{record.relativeName || "–"}</td>
+              {(onView || canEdit) && (
+                <td className="px-4 py-3">
+                  <div className="flex gap-1.5">
                     {onView && (
                       <button
                         onClick={() => onView(record)}
                         title="View details"
-                        style={{
-                          padding: "4px 8px",
-                          fontSize: "12px",
-                          background: "#17a2b8",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "3px",
-                          cursor: "pointer",
-                        }}
+                        className="rounded border border-ink/20 px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-ink/10"
                       >
                         View
                       </button>
@@ -235,15 +135,7 @@ export default function RecordTable({
                       <button
                         onClick={() => onEdit(record)}
                         title="Edit record"
-                        style={{
-                          padding: "4px 8px",
-                          fontSize: "12px",
-                          background: "#ffc107",
-                          color: "#000",
-                          border: "none",
-                          borderRadius: "3px",
-                          cursor: "pointer",
-                        }}
+                        className="rounded border border-accent/40 px-2.5 py-1 text-xs font-medium text-accent-dark transition-colors hover:bg-accent/15"
                       >
                         Edit
                       </button>
@@ -252,15 +144,7 @@ export default function RecordTable({
                       <button
                         onClick={() => onDelete(record)}
                         title="Delete record"
-                        style={{
-                          padding: "4px 8px",
-                          fontSize: "12px",
-                          background: "#dc3545",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "3px",
-                          cursor: "pointer",
-                        }}
+                        className="rounded border border-danger/40 px-2.5 py-1 text-xs font-medium text-danger transition-colors hover:bg-danger/10"
                       >
                         Delete
                       </button>

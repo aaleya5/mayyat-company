@@ -39,11 +39,14 @@ export default function SearchBar({
   };
 
   return (
-    <div style={{ position: "relative", marginBottom: "16px" }}>
-      <label htmlFor="search-input" style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: 500 }}>
+    <div className="relative mb-4">
+      <label
+        htmlFor="search-input"
+        className="mb-1.5 block text-sm font-medium text-ink-text"
+      >
         Search Records
       </label>
-      <div style={{ position: "relative" }}>
+      <div className="relative">
         <input
           id="search-input"
           type="text"
@@ -51,43 +54,21 @@ export default function SearchBar({
           value={input}
           onChange={handleChange}
           disabled={disabled}
-          style={{
-            width: "100%",
-            padding: "10px 36px 10px 12px",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-            fontSize: "14px",
-            fontFamily: "inherit",
-            boxSizing: "border-box",
-            transition: "border-color 0.2s",
-          }}
+          className="w-full border border-border bg-surface px-3 py-2.5 pr-10 text-sm text-ink-text placeholder:text-muted focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/15 disabled:cursor-not-allowed disabled:bg-paper disabled:text-muted"
         />
         {input && (
           <button
             onClick={handleClear}
             disabled={disabled}
             title="Clear search"
-            style={{
-              position: "absolute",
-              right: "8px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "16px",
-              padding: "4px",
-              color: "#666",
-            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-base text-muted transition-colors hover:text-ink-text disabled:cursor-not-allowed"
           >
             ✕
           </button>
         )}
       </div>
       {debouncedInput && input !== debouncedInput && (
-        <div style={{ fontSize: "12px", color: "#999", marginTop: "4px" }}>
-          Searching...
-        </div>
+        <div className="mt-1 text-xs text-muted">Searching...</div>
       )}
     </div>
   );

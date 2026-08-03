@@ -44,7 +44,13 @@ function App() {
     setUser(null);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-paper font-sans text-sm text-muted">
+        Loading…
+      </div>
+    );
+  }
 
   if (!user) {
     return <LoginPage onLogin={handleLogin} />;

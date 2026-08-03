@@ -3,6 +3,8 @@ import SearchBar from "../components/SearchBar";
 import FilterPanel from "../components/FilterPanel";
 import RecordTable from "../components/RecordTable";
 import RecordForm, { CreateRecordInput } from "../components/RecordForm";
+import RecordDetail from "../components/RecordDetail";
+import ToastStack, { type ToastData } from "../components/ToastStack";
 import { useRecords, type RecordRow, type RecordFilters } from "../hooks/useRecords";
 
 interface RecordsPageProps {
@@ -31,8 +33,17 @@ export default function RecordsPage({
   const [showForm, setShowForm] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<RecordRow | undefined>();
   const [formLoading, setFormLoading] = useState(false);
+  const [viewRecord, setViewRecord] = useState<RecordRow | null>(null);
 
   const [deleteConfirm, setDeleteConfirm] = useState<RecordRow | null>(null);
+
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const showToast = useCallback((message: string, variant: "success" | "error") => {
+    setToasts((prev) => [...prev, { id: Date.now(), message, variant }]);
+  }, []);
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const isAdmin = user?.role === "ADMIN";
   const totalPages = Math.ceil(total / limit);
@@ -67,6 +78,10 @@ export default function RecordsPage({
     setShowForm(true);
   };
 
+  const handleViewClick = (record: RecordRow) => {
+    setViewRecord(record);
+  };
+
   const handleEditClick = (record: RecordRow) => {
     setSelectedRecord(record);
     setShowForm(true);
@@ -92,9 +107,9 @@ export default function RecordsPage({
 
       setDeleteConfirm(null);
       await fetchRecords();
-      alert("Record deleted successfully");
+      showToast("Record deleted successfully", "success");
     } catch (err: any) {
-      alert("Delete error: " + err.message);
+      showToast("Delete error: " + err.message, "error");
     }
   };
 
@@ -126,10 +141,9 @@ export default function RecordsPage({
       setShowForm(false);
       setSelectedRecord(undefined);
       await fetchRecords();
-      alert(
-        selectedRecord
-          ? "Record updated successfully"
-          : "Record created successfully"
+      showToast(
+        selectedRecord ? "Record updated successfully" : "Record created successfully",
+        "success"
       );
     } catch (err: any) {
       throw new Error(err.message || "Save failed");
@@ -139,58 +153,45 @@ export default function RecordsPage({
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+    <div className="min-h-screen bg-paper font-sans text-ink-text">
       {/* Header */}
-      <header
-        style={{
-          background: "white",
-          borderBottom: "1px solid #ddd",
-          padding: "16px 24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0, fontSize: "24px" }}>📋 Death Records</h1>
+      <header className="flex items-center justify-between border-b border-ink-dark bg-ink px-6 py-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight leading-tight text-paper">
+              Mayyat
+            </h1>
+            <p className="text-xs uppercase tracking-wide text-accent-light/80">
+              Death Records Registry
+            </p>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+
+        <div className="flex items-center gap-4">
           {user && (
-            <span style={{ fontSize: "14px", color: "#666" }}>
-              👤 {user.name} ({user.role})
-            </span>
+            <div className="flex items-center gap-2 text-sm text-paper/90">
+              <span>{user.name}</span>
+              <span className="border border-accent-light/40 bg-ink-light px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-accent-light">
+                {user.role}
+              </span>
+            </div>
           )}
           <button
             onClick={onLogout}
-            style={{
-              padding: "8px 16px",
-              background: "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            className="border border-paper/20 px-4 py-1.5 text-sm font-medium text-paper transition-colors hover:bg-ink-light"
           >
             Logout
           </button>
         </div>
       </header>
 
-      <main style={{ padding: "24px" }}>
+      <main className="p-6">
         {/* Admin Actions */}
         {isAdmin && (
-          <div style={{ marginBottom: "20px" }}>
+          <div className="mb-5">
             <button
               onClick={handleCreateClick}
-              style={{
-                padding: "10px 20px",
-                background: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
+              className="bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-ink-light"
             >
               + New Record
             </button>
@@ -205,41 +206,25 @@ export default function RecordsPage({
 
         {/* Error Message */}
         {error && (
-          <div
-            style={{
-              background: "#f8d7da",
-              color: "#721c24",
-              padding: "12px",
-              borderRadius: "4px",
-              marginBottom: "16px",
-            }}
-          >
+          <div className="mb-4 border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             ⚠️ {error}
           </div>
         )}
 
         {/* Stats */}
-        <div
-          style={{
-            background: "white",
-            padding: "16px",
-            borderRadius: "4px",
-            marginBottom: "16px",
-            fontSize: "14px",
-            color: "#666",
-          }}
-        >
+        <div className="mb-4 bg-surface px-4 py-3 text-sm text-muted">
           Showing {records.length === 0 ? 0 : (page - 1) * limit + 1} to{" "}
           {Math.min(page * limit, total)} of {total} records
           {loading && " (loading...)"}
         </div>
 
         {/* Table */}
-        <div style={{ background: "white", borderRadius: "4px", overflow: "hidden" }}>
+        <div className="overflow-hidden border border-border bg-surface">
           {records.length > 0 ? (
             <RecordTable
               records={records}
               onSort={handleSort}
+              onView={handleViewClick}
               onEdit={isAdmin ? handleEditClick : undefined}
               onDelete={isAdmin ? handleDeleteClick : undefined}
               canEdit={isAdmin}
@@ -247,59 +232,32 @@ export default function RecordsPage({
               sortDir={sortDir}
             />
           ) : (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "#999",
-              }}
-            >
-              📭 No records found
+            <div className="px-6 py-16 text-center text-muted">
+              <p className="text-2xl">📭</p>
+              <p className="mt-2">No records found</p>
             </div>
           )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div
-            style={{
-              marginTop: "20px",
-              display: "flex",
-              justifyContent: "center",
-              gap: "8px",
-              alignItems: "center",
-            }}
-          >
+          <div className="mt-5 flex items-center justify-center gap-3">
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1 || loading}
-              style={{
-                padding: "8px 12px",
-                background: page === 1 ? "#e9ecef" : "#007BFF",
-                color: page === 1 ? "#999" : "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: page === 1 ? "default" : "pointer",
-              }}
+              className="bg-ink px-4 py-2 text-sm font-medium text-paper transition-colors hover:bg-ink-light disabled:cursor-default disabled:bg-border disabled:text-muted"
             >
               ← Previous
             </button>
 
-            <span style={{ fontSize: "14px", color: "#666" }}>
+            <span className="text-sm text-muted">
               Page {page} of {totalPages}
             </span>
 
             <button
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages || loading}
-              style={{
-                padding: "8px 12px",
-                background: page === totalPages ? "#e9ecef" : "#007BFF",
-                color: page === totalPages ? "#999" : "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: page === totalPages ? "default" : "pointer",
-              }}
+              className="bg-ink px-4 py-2 text-sm font-medium text-paper transition-colors hover:bg-ink-light disabled:cursor-default disabled:bg-border disabled:text-muted"
             >
               Next →
             </button>
@@ -307,28 +265,24 @@ export default function RecordsPage({
         )}
       </main>
 
-      {/* Record Form Modal */}
-      {showForm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
+      {/* Record Detail Modal (read-only, available to all roles) */}
+      {viewRecord && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-ink-dark/60 p-4">
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
+            className="max-h-[90vh] w-full max-w-xl overflow-y-auto bg-surface shadow-xl"
+          >
+            <RecordDetail record={viewRecord} onClose={() => setViewRecord(null)} />
+          </div>
+        </div>
+      )}
+
+      {/* Record Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-ink-dark/60 p-4">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] w-full max-w-xl overflow-y-auto bg-surface shadow-xl"
           >
             <RecordForm
               record={selectedRecord}
@@ -342,62 +296,26 @@ export default function RecordsPage({
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1001,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: "24px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              maxWidth: "400px",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Delete Record?</h3>
-            <p>
+        <div className="fixed inset-0 z-[1001] flex items-center justify-center bg-ink-dark/60 p-4">
+          <div className="w-full max-w-sm bg-surface p-6 shadow-xl">
+            <h3 className="font-display text-lg font-semibold text-ink-text">
+              Delete Record?
+            </h3>
+            <p className="mt-2 text-sm text-muted">
               Are you sure you want to delete the record for{" "}
-              <strong>{deleteConfirm.name}</strong>? This can be restored later.
+              <strong className="text-ink-text">{deleteConfirm.name}</strong>? This
+              can be restored later.
             </p>
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div className="mt-5 flex gap-3">
               <button
                 onClick={handleDeleteConfirm}
-                style={{
-                  flex: 1,
-                  padding: "10px",
-                  background: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                }}
+                className="flex-1 bg-danger px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-danger-light"
               >
                 Delete
               </button>
               <button
                 onClick={() => setDeleteConfirm(null)}
-                style={{
-                  flex: 1,
-                  padding: "10px",
-                  background: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                }}
+                className="flex-1 border border-border px-4 py-2.5 text-sm font-medium text-ink-text transition-colors hover:bg-paper"
               >
                 Cancel
               </button>
@@ -405,6 +323,8 @@ export default function RecordsPage({
           </div>
         </div>
       )}
+
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
