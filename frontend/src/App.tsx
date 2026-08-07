@@ -1,12 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import type { AuthUser } from "@mayyat/shared";
 import LoginPage from "./pages/LoginPage";
 import RecordsPage from "./pages/RecordsPage";
+import Layout, { type AppView } from "./components/Layout";
+
+// Lazy-loaded: recharts is a fairly heavy dependency, and only admins ever
+// see this page. Without this, everyone - including VIEWER accounts who can
+// never reach the Tally tab - would download it on initial page load.
+const StatsPage = lazy(() => import("./pages/StatsPage"));
 
 function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<AppView>("records");
 
   useEffect(() => {
     // Check if token exists and is valid
@@ -42,6 +49,7 @@ function App() {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
+    setView("records");
   };
 
   if (loading) {
@@ -56,7 +64,17 @@ function App() {
     return <LoginPage onLogin={handleLogin} />;
   }
 
-  return <RecordsPage token={token} user={user} onLogout={handleLogout} />;
+  return (
+    <Layout user={user} onLogout={handleLogout} view={view} onNavigate={setView}>
+      {view === "stats" ? (
+        <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+          <StatsPage token={token} />
+        </Suspense>
+      ) : (
+        <RecordsPage token={token} user={user} />
+      )}
+    </Layout>
+  );
 }
 
 export default App;

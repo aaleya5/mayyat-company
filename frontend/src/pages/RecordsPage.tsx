@@ -10,7 +10,6 @@ import { useRecords, type RecordRow, type RecordFilters } from "../hooks/useReco
 interface RecordsPageProps {
   token: string | null;
   user?: { email: string; name: string; role: string };
-  onLogout: () => void;
 }
 
 /**
@@ -22,7 +21,6 @@ interface RecordsPageProps {
 export default function RecordsPage({
   token,
   user,
-  onLogout,
 }: RecordsPageProps) {
   const { records, total, page, limit, loading, error, setPage, setFilters, fetchRecords } =
     useRecords(token);
@@ -153,39 +151,7 @@ export default function RecordsPage({
   };
 
   return (
-    <div className="min-h-screen bg-paper font-sans text-ink-text">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-ink-dark bg-ink px-6 py-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight leading-tight text-paper">
-              Mayyat
-            </h1>
-            <p className="text-xs uppercase tracking-wide text-accent-light/80">
-              Death Records Registry
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {user && (
-            <div className="flex items-center gap-2 text-sm text-paper/90">
-              <span>{user.name}</span>
-              <span className="border border-accent-light/40 bg-ink-light px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-accent-light">
-                {user.role}
-              </span>
-            </div>
-          )}
-          <button
-            onClick={onLogout}
-            className="border border-paper/20 px-4 py-1.5 text-sm font-medium text-paper transition-colors hover:bg-ink-light"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main className="p-6">
+    <>
         {/* Admin Actions */}
         {isAdmin && (
           <div className="mb-5">
@@ -263,7 +229,6 @@ export default function RecordsPage({
             </button>
           </div>
         )}
-      </main>
 
       {/* Record Detail Modal (read-only, available to all roles) */}
       {viewRecord && (
@@ -325,6 +290,6 @@ export default function RecordsPage({
       )}
 
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
-    </div>
+    </>
   );
 }
