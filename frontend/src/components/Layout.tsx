@@ -20,7 +20,7 @@ interface LayoutProps {
  */
 export default function Layout({ user, onLogout, view, onNavigate, children }: LayoutProps) {
   const navLinkClass = (active: boolean) =>
-    `text-sm font-medium transition-colors ${
+    `border-none bg-transparent text-sm font-medium transition-colors ${
       active ? "text-accent-light" : "text-paper/70 hover:text-paper"
     }`;
 
@@ -28,7 +28,7 @@ export default function Layout({ user, onLogout, view, onNavigate, children }: L
     <div className="min-h-screen bg-paper font-sans text-ink-text">
       {/* Header */}
       <header className="border-b border-ink-dark bg-ink shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 md:px-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-8 py-4 md:px-12">
           <div className="flex items-center gap-8">
             <div>
               <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight leading-tight text-paper">
@@ -68,7 +68,7 @@ export default function Layout({ user, onLogout, view, onNavigate, children }: L
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 md:px-10">{children}</main>
+      <main className="mx-auto max-w-6xl px-8 py-8 md:px-12">{children}</main>
     </div>
   );
 }

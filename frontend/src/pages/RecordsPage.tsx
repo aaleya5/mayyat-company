@@ -237,7 +237,7 @@ export default function RecordsPage({
             onClick={(e) => e.stopPropagation()}
             className="max-h-[90vh] w-full max-w-xl overflow-y-auto bg-surface shadow-xl"
           >
-            <RecordDetail record={viewRecord} onClose={() => setViewRecord(null)} />
+            <RecordDetail record={viewRecord} token={token} onClose={() => setViewRecord(null)} />
           </div>
         </div>
       )}

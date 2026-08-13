@@ -3,6 +3,8 @@ import { z } from "zod";
 import { authenticate } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 import { prisma } from "../lib/db";
+import { generatePamphletHtml } from "../lib/pamphletTemplate";
+import { renderHtmlToPdf } from "../lib/pdf";
 
 export const recordsRouter = Router();
 
@@ -385,5 +387,62 @@ recordsRouter.get(
     }
   }
 );
+
+/**
+ * GET /api/records/:id/pamphlet?lang=gu|en
+ *
+ * Returns the death-notice pamphlet as a standalone HTML document (increment
+ * 5.1). Open to any authenticated role, same as viewing a record's details -
+ * this isn't a write action. Reused directly by the frontend "Print" button
+ * in 5.4, and by the Puppeteer PDF endpoint in 5.3 (which renders this same
+ * HTML rather than a separate template).
+ */
+recordsRouter.get("/:id/pamphlet", authenticate, async (req: Request, res: Response) => {
+  try {
+    const record = await prisma.record.findUnique({ where: { id: req.params.id } });
+
+    if (!record || record.isDeleted) {
+      return res.status(404).json({ error: "Record not found" });
+    }
+
+    const lang = req.query.lang === "en" ? "en" : "gu";
+    const html = generatePamphletHtml(record, lang);
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(html);
+  } catch (error: any) {
+    console.error("GET /records/:id/pamphlet error:", error);
+    res.status(500).json({ error: "Failed to generate pamphlet" });
+  }
+});
+
+/**
+ * GET /api/records/:id/pamphlet.pdf?lang=gu|en
+ *
+ * Downloadable PDF version of the pamphlet (increment 5.3). Renders the
+ * exact same HTML as GET /:id/pamphlet through Puppeteer - not a separate
+ * template, so the PDF and the print view can't drift apart.
+ */
+recordsRouter.get("/:id/pamphlet.pdf", authenticate, async (req: Request, res: Response) => {
+  try {
+    const record = await prisma.record.findUnique({ where: { id: req.params.id } });
+
+    if (!record || record.isDeleted) {
+      return res.status(404).json({ error: "Record not found" });
+    }
+
+    const lang = req.query.lang === "en" ? "en" : "gu";
+    const html = generatePamphletHtml(record, lang);
+    const pdfBuffer = await renderHtmlToPdf(html);
+
+    const filename = `${record.name.replace(/[^a-z0-9]+/gi, "-")}-${lang}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
+  } catch (error: any) {
+    console.error("GET /records/:id/pamphlet.pdf error:", error);
+    res.status(500).json({ error: "Failed to generate PDF" });
+  }
+});
 
 export default recordsRouter;

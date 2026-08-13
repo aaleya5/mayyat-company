@@ -36,7 +36,7 @@ function Toast({ toast, onDismiss }: ToastProps) {
       <p className="flex-1 text-sm text-ink-text">{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="text-muted transition-colors hover:text-ink-text"
+        className="border-none bg-transparent text-muted transition-colors hover:text-ink-text"
         aria-label="Dismiss"
       >
         ✕
